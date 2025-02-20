@@ -6,52 +6,153 @@ import android.os.Bundle
 import android.os.Vibrator
 import android.os.VibrationEffect
 import android.util.Log
-import android.widget.EditText
-import android.widget.Toast
-import android.text.TextWatcher
-import android.text.Editable
+import android.widget.Button
+import android.widget.TextView
 
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
+    private var descansando = false
+    private var pomodo_concluido = 0
+    private var job: Job? = null
+
+    private lateinit var textoTempo: TextView
+    private lateinit var botaoIniciar: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val editTextNumero = findViewById<EditText>(R.id.editTextNumero)
-        editTextNumero.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        botaoIniciar = findViewById<Button>(R.id.botaoIniciar)
+        textoTempo = findViewById<TextView>(R.id.textoTempo)
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val textoDigitado = s.toString()
-                val numero: Int? = textoDigitado.toIntOrNull()
-
-                if (numero != null) {
-                    Log.d("MainActivity", "Número: $numero")
-                    exemploVibracao()
-                } else {
-                    Log.d("MainActivity", "Texto inválido, não é um número.")
-                    Toast.makeText(applicationContext, "Por favor, digite um número!", Toast.LENGTH_SHORT).show()
-                }
+        botaoIniciar.setOnClickListener {
+            if (!descansando) {
+                iniciarPomodoro()
             }
-            override fun afterTextChanged(s: Editable?) {}
-        })
+        }
+
     }
 
-    private fun vibrar(context: Context, tempo: Long) {
-        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    private fun iniciarPomodoro() {
+        var duracaoPomodoro = 0
+        botaoIniciar.isEnabled = false
+        job?.cancel()
+        job = CoroutineScope(Dispatchers.Main).launch {
+
+            while (duracaoPomodoro < 25) {
+                duracaoPomodoro++
+                val minutos =  duracaoPomodoro / 60
+                val segundos =  duracaoPomodoro % 60
+
+                textoTempo.text = "Tempo:  %02d:%02d".format(minutos, segundos)
+                Log.d("MainActivity", "Tempo: $duracaoPomodoro")
+                delay(1000)
+
+            }
+
+            pomodo_concluido++
+            vibrar(500)
+
+            if (pomodo_concluido % 4 == 0) {
+                iniciarDescansoLongo()
+            } else {
+                iniciarDescansoCurto()
+            }
+        }
+    }
+
+
+    private fun iniciarDescansoCurto() {
+        var duracaoDescansoCurto = 0 // Descanso curto de 10 segundos
+
+        descansando = true
+
+        textoTempo.text = "Descanso Curto: 5:00"
+        Log.d("MainActivity", "Descanso Curto: 5:00")
+        job?.cancel()
+        job = CoroutineScope(Dispatchers.Main).launch {
+
+            while (duracaoDescansoCurto < 5000) {
+                duracaoDescansoCurto++
+
+                val minutos = (300 - duracaoDescansoCurto) / 60
+                val segundos = (300 - duracaoDescansoCurto) % 60
+                textoTempo.text = "Tempo: %02d:%02d".format(minutos, segundos) +" restantes"
+                Log.d(
+                    "MainActivity",
+                    "Tempo:" + (10 - duracaoDescansoCurto) + " restantes"
+                )
+                delay(1000)
+            }
+
+            vibrar(500)
+            descansando = false
+            botaoIniciar.isEnabled = true
+            textoTempo.text = "Pronto para outro Pomodoro!"
+        }
+    }
+
+
+
+    private fun iniciarDescansoLongo() {
+        var duracaoDescansoLongo = 0 // Descanso longo de 50 segundos
+        botaoIniciar.isEnabled = false
+
+        descansando = true
+        textoTempo.text = "Descanso Curto: 1:00"
+
+        Log.d("MainActivity", "Descanso Curto: 5:00")
+        job?.cancel()
+        job = CoroutineScope(Dispatchers.Main).launch {
+
+            while (duracaoDescansoLongo < 30000) {
+                duracaoDescansoLongo++
+
+                val minutos = (300 - duracaoDescansoLongo) / 60
+                val segundos = (300 - duracaoDescansoLongo) % 60
+                textoTempo.text = "Tempo: %02d:%02d".format(minutos, segundos) +" restantes"
+                Log.d(
+                    "MainActivity",
+                    "Tempo:" + (50 - duracaoDescansoLongo) + " restantes"
+                )
+                delay(1000)
+            }
+
+            vibrar(500)
+            descansando = false
+            botaoIniciar.isEnabled = true
+            textoTempo.text = "Pronto para outro Pomodoro!"
+        }
+
+    }
+
+    private fun vibrar(tempo: Long) {
+        val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         if (vibrator.hasVibrator()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val vibrationEffect = VibrationEffect.createOneShot(tempo, VibrationEffect.DEFAULT_AMPLITUDE)
-                vibrator.vibrate(vibrationEffect)
+                vibrator.vibrate(VibrationEffect.createOneShot(tempo, VibrationEffect.DEFAULT_AMPLITUDE))
             } else {
                 vibrator.vibrate(tempo)
             }
         }
     }
 
+
     fun exemploVibracao() {
-        vibrar(this, 500)
+        vibrar( 500)
     }
 
 }
+
+
+
+
+
+
+
