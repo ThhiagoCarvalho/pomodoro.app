@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
 
-            while (duracaoPomodoro < 25000) {
+            while (duracaoPomodoro < 1500) {
                 duracaoPomodoro++
                 val minutos =  duracaoPomodoro / 60
                 val segundos =  duracaoPomodoro % 60
@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
 
-            while (duracaoDescansoCurto < 5000) {
+            while (duracaoDescansoCurto < 300) {
                 duracaoDescansoCurto++
 
                 val minutos = (300 - duracaoDescansoCurto) / 60
@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
 
-            while (duracaoDescansoLongo < 30000) {
+            while (duracaoDescansoLongo < 900) {
                 duracaoDescansoLongo++
 
                 val minutos = (300 - duracaoDescansoLongo) / 60
