@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
 
-            while (duracaoPomodoro < 25) {
+            while (duracaoPomodoro < 25000) {
                 duracaoPomodoro++
                 val minutos =  duracaoPomodoro / 60
                 val segundos =  duracaoPomodoro % 60
