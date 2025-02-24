@@ -44,13 +44,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun pausarOuRetomar() {
-        pausado = !pausado // Alterna entre pausado e rodando
+        pausado = !pausado 
 
         if (pausado) {
             botaoPausa.text = "Retomar"
         } else {
             botaoPausa.text = "Pausar"
-            retomarPomodoro() // Retoma de onde parou
+            retomarPomodoro() 
         }
     }
 
@@ -60,9 +60,9 @@ class MainActivity : AppCompatActivity() {
 
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
-            while (duracaoPomodoro < 5) {
+            while (duracaoPomodoro < 60*25) {
                 while (pausado) {
-                    delay(500) // Pequeno delay para evitar consumo excessivo de CPU
+                    delay(500) 
                 }
                 duracaoPomodoro++
                 atualizarTempo(duracaoPomodoro)
@@ -89,12 +89,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun iniciarDescansoCurto() {
         descansando = true
-        iniciarDescanso(300) // 5 minutos
+        iniciarDescanso(300) 
     }
 
     private fun iniciarDescansoLongo() {
         descansando = true
-        iniciarDescanso(900) // 15 minutos
+        iniciarDescanso(900) 
     }
 
     private fun iniciarDescanso(tempoTotal: Int) {
@@ -103,7 +103,7 @@ class MainActivity : AppCompatActivity() {
         job = CoroutineScope(Dispatchers.Main).launch {
             while (tempoRestante > 0) {
                 while (pausado) {
-                    delay(500) // Pequeno delay para evitar consumo excessivo de CPU
+                    delay(500) 
                 }
 
                 atualizarTempo(tempoRestante)
