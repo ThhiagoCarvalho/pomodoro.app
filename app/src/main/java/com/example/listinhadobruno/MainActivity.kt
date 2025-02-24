@@ -10,26 +10,27 @@ import android.widget.Button
 import android.widget.TextView
 
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlin.coroutines.resume
 
 class MainActivity : AppCompatActivity() {
     private var descansando = false
     private var pomodo_concluido = 0
     private var job: Job? = null
+    private var pausado = false
+    private var duracaoPomodoro = 0
 
     private lateinit var textoTempo: TextView
     private lateinit var botaoIniciar: Button
+    private lateinit var botaoPausa: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        botaoIniciar = findViewById<Button>(R.id.botaoIniciar)
-        textoTempo = findViewById<TextView>(R.id.textoTempo)
+        botaoIniciar = findViewById(R.id.botaoIniciar)
+        textoTempo = findViewById(R.id.textoTempo)
+        botaoPausa = findViewById(R.id.botaoPausa)
 
         botaoIniciar.setOnClickListener {
             if (!descansando) {
@@ -37,23 +38,35 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        botaoPausa.setOnClickListener {
+            pausarOuRetomar()
+        }
+    }
+
+    private fun pausarOuRetomar() {
+        pausado = !pausado // Alterna entre pausado e rodando
+
+        if (pausado) {
+            botaoPausa.text = "Retomar"
+        } else {
+            botaoPausa.text = "Pausar"
+            retomarPomodoro() // Retoma de onde parou
+        }
     }
 
     private fun iniciarPomodoro() {
-        var duracaoPomodoro = 0
         botaoIniciar.isEnabled = false
+        pausado = false
+
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
-
-            while (duracaoPomodoro < 25) {
+            while (duracaoPomodoro < 5) {
+                while (pausado) {
+                    delay(500) // Pequeno delay para evitar consumo excessivo de CPU
+                }
                 duracaoPomodoro++
-                val minutos =  duracaoPomodoro / 60
-                val segundos =  duracaoPomodoro % 60
-
-                textoTempo.text = "Tempo:  %02d:%02d".format(minutos, segundos)
-                Log.d("MainActivity", "Tempo: $duracaoPomodoro")
+                atualizarTempo(duracaoPomodoro)
                 delay(1000)
-
             }
 
             pomodo_concluido++
@@ -67,27 +80,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun retomarPomodoro() {
+        if (job == null || job?.isCancelled == true) {
+            iniciarPomodoro()
+        }
+    }
+    
 
     private fun iniciarDescansoCurto() {
-        var duracaoDescansoCurto = 0 // Descanso curto de 10 segundos
-
         descansando = true
+        iniciarDescanso(300) // 5 minutos
+    }
 
-        textoTempo.text = "Descanso Curto: 5:00"
-        Log.d("MainActivity", "Descanso Curto: 5:00")
+    private fun iniciarDescansoLongo() {
+        descansando = true
+        iniciarDescanso(900) // 15 minutos
+    }
+
+    private fun iniciarDescanso(tempoTotal: Int) {
+        var tempoRestante = tempoTotal
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
+            while (tempoRestante > 0) {
+                while (pausado) {
+                    delay(500) // Pequeno delay para evitar consumo excessivo de CPU
+                }
 
-            while (duracaoDescansoCurto < 5000) {
-                duracaoDescansoCurto++
-
-                val minutos = (300 - duracaoDescansoCurto) / 60
-                val segundos = (300 - duracaoDescansoCurto) % 60
-                textoTempo.text = "Tempo: %02d:%02d".format(minutos, segundos) +" restantes"
-                Log.d(
-                    "MainActivity",
-                    "Tempo:" + (10 - duracaoDescansoCurto) + " restantes"
-                )
+                atualizarTempo(tempoRestante)
+                tempoRestante--
                 delay(1000)
             }
 
@@ -98,38 +118,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-
-    private fun iniciarDescansoLongo() {
-        var duracaoDescansoLongo = 0 // Descanso longo de 50 segundos
-        botaoIniciar.isEnabled = false
-
-        descansando = true
-        textoTempo.text = "Descanso Curto: 1:00"
-
-        Log.d("MainActivity", "Descanso Curto: 5:00")
-        job?.cancel()
-        job = CoroutineScope(Dispatchers.Main).launch {
-
-            while (duracaoDescansoLongo < 30000) {
-                duracaoDescansoLongo++
-
-                val minutos = (300 - duracaoDescansoLongo) / 60
-                val segundos = (300 - duracaoDescansoLongo) % 60
-                textoTempo.text = "Tempo: %02d:%02d".format(minutos, segundos) +" restantes"
-                Log.d(
-                    "MainActivity",
-                    "Tempo:" + (50 - duracaoDescansoLongo) + " restantes"
-                )
-                delay(1000)
-            }
-
-            vibrar(500)
-            descansando = false
-            botaoIniciar.isEnabled = true
-            textoTempo.text = "Pronto para outro Pomodoro!"
-        }
-
+    private fun atualizarTempo(tempoSegundos: Int) {
+        val minutos = tempoSegundos / 60
+        val segundos = tempoSegundos % 60
+        textoTempo.text = "Tempo: %02d:%02d".format(minutos, segundos)
+        Log.d("MainActivity", "Tempo: $tempoSegundos segundos restantes")
     }
 
     private fun vibrar(tempo: Long) {
@@ -142,17 +135,4 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-
-    fun exemploVibracao() {
-        vibrar( 500)
-    }
-
 }
-
-
-
-
-
-
-
